@@ -1,0 +1,120 @@
+<!-- Main Content Wrapper -->
+<div class="main-wrapper">
+  <!-- Heade Wrapper -->
+  <header>
+    <app-header></app-header>
+  </header>
+  <!-- Content Wrapper -->
+  <div class="content-wrap">
+      <!-- Sidebar Wrapper -->
+      <div class="sidebar-wrap">
+          <!-- Sidebar tab for oneway and roundtrip -->
+          <tabs>
+              <!-- One way tab content  -->
+              <tab tabTitle="One Way">
+                  <!-- One way search form -->
+                  <form #onewaysearchForm="ngForm" (ngSubmit)="onewaysearch(onewaysearchForm)" class="search-form" autocomplete="off">
+                      <div class="form-group" [class.has-error]="originCity.invalid && originCity.touched" [class.has-success]="originCity.valid">
+                          <input type="text" class="form-control" id="originCity" name="originCity" placeholder="Enter Origin City" #originCity="ngModel" ngModel required />
+                      </div>
+                      <div class="form-group" [class.has-error]="destinationCity.invalid && destinationCity.touched" [class.has-success]="destinationCity.valid">
+                          <input type="text" class="form-control" id="destinationCity" name="destinationCity" placeholder="Enter Destination City"  #destinationCity="ngModel" ngModel required />
+                      </div>
+                      <div class="form-group">
+                          <angular2-date-picker [ngModel] ="departureDate | date:'y MMM dd'" (ngModelChange)="departureDate = $event" name="departureDate" [settings]="settings" class="angulardatepicker"></angular2-date-picker>
+                      </div>
+                      <div class="form-group" [class.has-error]="passangers.invalid && passangers.touched" [class.has-success]="passangers.valid">
+                          <input type="number" class="form-control" id="passangers" name="passangers" placeholder="Passngers" min="1" #passangers="ngModel" ngModel required />
+                      </div>
+                      <button type="submit" name="onewaysubmit" class="btn red-btn" [disabled]="onewaysearchForm.invalid">Search Flight</button>
+                  </form>    
+              </tab>
+              <!-- Round trip tab content -->
+              <tab tabTitle="Round Trip">
+                  <!-- Round trip search form -->
+                  <form #roundtripsearchForm="ngForm" (ngSubmit)="roundtripsearch(roundtripsearchForm)" class="search-form roundtrip-form" autocomplete="off">
+                      <div class="form-group" [class.has-error]="originCityR.invalid && originCityR.touched" [class.has-success]="originCityR.valid">
+                          <input type="text" class="form-control" id="originCityR" name="originCity" placeholder="Enter Origin City" #originCityR="ngModel" ngModel required />
+                      </div>
+                      <div class="form-group" [class.has-error]="destinationCityR.invalid && destinationCityR.touched" [class.has-success]="destinationCityR.valid">
+                          <input type="text" class="form-control" id="destinationCityR" name="destinationCity" placeholder="Enter Destination City"  #destinationCityR="ngModel" ngModel required />
+                      </div>
+                      <div class="form-group">
+                          <angular2-date-picker [ngModel] ="departureDate | date:'y MMM dd'" (ngModelChange)="DateChange($event)" name="departureDateR" [settings]="settings" class="angulardatepicker"></angular2-date-picker>
+                      </div>
+                      <div class="form-group">
+                          <angular2-date-picker [ngModel] ="returnDate | date:'y MMM dd'" (ngModelChange)="returnDate = $event" name="returnDateR" [settings]="settings" class="angulardatepicker"></angular2-date-picker>
+                      </div>
+                      <div class="form-group" [class.has-error]="passangersR.invalid && passangersR.touched" [class.has-success]="passangersR.valid">
+                          <input type="number" class="form-control" id="passangersR" name="passangers" placeholder="Passngers" min="1"  #passangersR="ngModel" ngModel required />
+                      </div>
+                      <button type="submit" name="onewaysubmit" class="btn red-btn" [disabled]="roundtripsearchForm.invalid">Search Flight</button>
+                  </form> 
+              </tab>
+          </tabs>
+          <div class="range-wrap">
+            <h3>Refine Flight Search By Price(₹):</h3>
+            <ng5-slider [(value)]="minValue" [(highValue)]="maxValue" [options]="options" (valueChange)="pricefilter()"></ng5-slider>
+          </div>
+      </div>
+      <!-- Search result display content wrapper-->
+      <div class="page-content">
+        <!-- Top route and date info wrapper -->
+        <div class="top-content" *ngIf="FilterData && FilterData.length > 0">
+            <div class="left-content">
+                <h2 *ngIf="type == 'oneway'">{{originCityName}} > {{destinationCityName}}
+                  <span class="passanger-count" *ngIf="passanger == 1">({{passanger}} Passanger)</span>
+                  <span class="passanger-count" *ngIf="passanger > 1">({{passanger}} Passangers)</span>
+                </h2>
+                <h2 *ngIf="type != 'oneway'">{{originCityName}} > {{destinationCityName}} > {{originCityName}}
+                  <span class="passanger-count" *ngIf="passanger == 1">({{passanger}} Passanger)</span>
+                  <span class="passanger-count" *ngIf="passanger > 1">({{passanger}} Passangers)</span>
+                </h2>
+            </div>
+            <div class="right-content">
+                <label>Depart: {{departureDateSelected | date:'dd MMM y'}}</label>
+                <label *ngIf="type != 'oneway'">Return: {{returnDateSelected | date:'dd MMM y'}}</label>
+            </div>
+        </div>
+        <!--  Main content -->
+        <div class="main-content">
+          <!-- If no search or by default display message -->
+          <div class="no-search" *ngIf="!FilterData">
+            <p>Please search flights to see results.</p>
+          </div>
+          <!-- No search result wrapper-->
+          <div class="no-result no-search" *ngIf="FilterData && FilterData.length == 0">
+              <p>No flights found for this route.</p>
+          </div>
+          <!-- flight search display wrapper -->
+          <div *ngIf="FilterData && FilterData.length > 0">
+            <div class="flight-wrap {{type}}" *ngFor="let flight of FilterData;let i = index">
+              <div class="left-content">
+                  <h3 *ngIf="type =='oneway'">{{flight.price * passanger | currency:"INR" }}</h3>
+                  <h3 *ngIf="type != 'oneway'">{{(flight.price + FilterDataRound[i].price)  * passanger | currency:"INR"}}</h3>
+                  <div class="col-2">
+                      <label>{{flight.airlineCode}}-{{flight.flightNumber}}</label>
+                      <label>{{flight.origin}} > {{flight.destination}}</label>
+                      <label>Depart: {{flight.departureTimeAirport}}</label>
+                      <label>Arrive: {{flight.arrivalTimeAirport}}</label>
+                  </div>
+                  <div class="col-2" *ngIf="type!='oneway' && FilterDataRound[i]">
+                      <label>{{FilterDataRound[i].airlineCode}}-{{FilterDataRound[i].flightNumber}}</label>
+                      <label>{{FilterDataRound[i].origin}} > {{FilterDataRound[i].destination}}</label>
+                      <label>Depart: {{FilterDataRound[i].departureTimeAirport}}</label>
+                      <label>Arrive: {{FilterDataRound[i].arrivalTimeAirport}}</label>
+                  </div>
+              </div>
+              <div class="right-content">
+                  <div class="image-wrap">
+                      <img src="../../assets/images/{{flight.airlineCode}}.png" alt="{{flight.airlineCode}}"/>
+                  </div>
+                  <p>{{flight.airline}}</p>
+                  <button class="btn red-btn" title="Book This Flight">Book This Flight</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+  </div>
+</div> 
